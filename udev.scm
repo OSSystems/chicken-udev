@@ -79,7 +79,7 @@
            (unref-device dev)
            udev-dev))))
 
-(define (udev-monitor-start dispatcher)
+(define (udev-monitor-start dispatcher #!key (polling-interval 0.2))
   (let* ((udev (new-udev))
          (monitor (new-monitor udev))
          (monitor-fd (monitor->fd monitor))
@@ -90,7 +90,7 @@
                (let ((dev (receive-device monitor)))
                  (if dev
                      (dispatcher dev)
-                     (thread-sleep! 0.1))
+                     (thread-sleep! polling-interval))
                  (loop)))))))
     (thread-specific-set! thread (cons udev monitor))
     (thread-start! thread)))
