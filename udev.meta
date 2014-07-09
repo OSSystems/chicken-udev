@@ -1,0 +1,7 @@
+;; -*- scheme -*-
+((synopsis "libudev bindings")
+ (author "O.S. Systems")
+ (maintainer "Mario Domenech Goulart")
+ (category os)
+ (license "BSD")
+ (foreign-depends libudev))

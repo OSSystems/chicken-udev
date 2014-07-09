@@ -1,0 +1,8 @@
+;; -*- scheme -*- scheme
+(compile -d1 -O3 -J -s -ludev udev.scm)
+(compile -d1 -O3 -s udev.import.scm)
+
+(install-extension
+ 'udev
+ '("udev.so" "udev.import.so")
+ '((version "0.0.1")))
