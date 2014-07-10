@@ -53,14 +53,18 @@
 (define unref-device
   (foreign-lambda void udev_device_unref (c-pointer (struct "udev_device"))))
 
-(define-record udev-device node subsystem type action)
+(define-record udev-device node subsystem type action syspath sysname sysnum)
 
 (define-record-printer (udev-device obj out)
-  (fprintf out "#<device node: ~S subsystem: ~S type: ~S action: ~S>"
+  (fprintf out
+           "#<device node: ~S subsystem: ~S type: ~S action: ~S syspath: ~S sysname: ~S sysnum: ~S>"
            (udev-device-node obj)
            (udev-device-subsystem obj)
            (udev-device-type obj)
-           (udev-device-action obj)))
+           (udev-device-action obj)
+           (udev-device-syspath obj)
+           (udev-device-sysname obj)
+           (udev-device-sysnum obj)))
 
 (define-syntax udev-device-get-string
   (syntax-rules ()
@@ -75,7 +79,10 @@
                  ((udev-device-get-string "udev_device_get_devnode") dev)
                  ((udev-device-get-string "udev_device_get_subsystem") dev)
                  ((udev-device-get-string "udev_device_get_devtype") dev)
-                 ((udev-device-get-string "udev_device_get_action") dev))))
+                 ((udev-device-get-string "udev_device_get_action") dev)
+                 ((udev-device-get-string "udev_device_get_syspath") dev)
+                 ((udev-device-get-string "udev_device_get_sysname") dev)
+                 ((udev-device-get-string "udev_device_get_sysnum") dev))))
            (unref-device dev)
            udev-dev))))
 
