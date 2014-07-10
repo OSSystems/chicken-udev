@@ -15,21 +15,21 @@
 
 (foreign-declare "#include <libudev.h>")
 
-(define %new-udev
+(define %udev-new
   (foreign-lambda* (c-pointer (struct "udev")) ()
     "struct udev *udev;
      udev = udev_new();
      C_return(udev);
     "))
 
-(define (new-udev)
-  (or (%new-udev)
+(define (udev-new)
+  (or (%udev-new)
       (signal
        (make-composite-condition
         (make-property-condition 'udev)
         (make-property-condition
          'exn
-         'location 'new-udev
+         'location 'udev-new
          'message "Could not create udev context")))))
 
 (define %udev-unref
@@ -94,7 +94,7 @@
            udev-dev))))
 
 (define (udev-monitor-start dispatcher #!key (polling-interval 0.2))
-  (let* ((udev (new-udev))
+  (let* ((udev (udev-new))
          (monitor (new-monitor udev))
          (monitor-fd (monitor->fd monitor))
          (thread
