@@ -10,6 +10,10 @@
  udev-device-type
  udev-device-subsystem
  udev-device-action
+ udev-device-syspath
+ udev-device-sysname
+ udev-device-sysnum
+ udev-device-driver
 )
 
 (import chicken scheme foreign)
