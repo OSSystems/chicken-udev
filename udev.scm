@@ -53,8 +53,8 @@
                   udev_monitor_receive_device
                   (c-pointer (struct "udev_monitor"))))
 
-(define unref-device
-  (foreign-lambda void udev_device_unref (c-pointer (struct "udev_device"))))
+(define %udev-device-unref
+  (foreign-lambda void "udev_device_unref" (c-pointer (struct "udev_device"))))
 
 (define-record udev-device node subsystem type action syspath sysname sysnum)
 
@@ -90,7 +90,7 @@
   (let ((dev (%receive-device mon)))
     (and dev
          (let ((udev-dev (make-udev-device dev)))
-           (unref-device dev)
+           (%udev-device-unref dev)
            udev-dev))))
 
 (define (udev-monitor-start dispatcher #!key (polling-interval 0.2))
