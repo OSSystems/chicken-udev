@@ -101,6 +101,7 @@
          (mon (cdr mon-data)))
     ((foreign-lambda void "udev_unref" (c-pointer (struct "udev"))) udev)
     ((foreign-lambda void "udev_monitor_unref" (c-pointer (struct "udev_monitor"))) mon)
+    (thread-terminate! monitor)
     ))
 
 ) ;; end module
