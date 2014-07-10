@@ -44,6 +44,11 @@
      C_return(mon);
     "))
 
+(define %udev-monitor-unref
+  (foreign-lambda void
+                  "udev_monitor_unref"
+                  (c-pointer (struct "udev_monitor"))))
+
 (define monitor->fd
   (foreign-lambda* int (((c-pointer (struct "udev_monitor")) mon))
     "C_return(udev_monitor_get_fd(mon));"))
@@ -114,8 +119,7 @@
          (udev (car mon-data))
          (mon (cdr mon-data)))
     (%udev-unref udev)
-    ((foreign-lambda void "udev_monitor_unref" (c-pointer (struct "udev_monitor"))) mon)
-    (thread-terminate! monitor)
-    ))
+    (%udev-monitor-unref mon)
+    (thread-terminate! monitor)))
 
 ) ;; end module
