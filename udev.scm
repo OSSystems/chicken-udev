@@ -3,6 +3,7 @@
 (udev-monitor-start
  udev-monitor-stop!
  udev-list-devices
+ udev-device-parent-with-subsystem-devtype
 
  ;; udev-device record
  udev-device-node
@@ -135,6 +136,13 @@
                   (c-pointer (struct "udev"))
                   c-string))
 
+(define %udev-device-get-parent-with-subsystem-devtype
+  (foreign-lambda (c-pointer (struct "udev_device"))
+                  "udev_device_get_parent_with_subsystem_devtype"
+                  (c-pointer (struct "udev_device"))
+                  c-string
+                  c-string))
+
 (define (udev-scan-devices udev uenum)
   (if (zero? (%udev-enumerate-scan-devices uenum))
       (void)
@@ -211,5 +219,22 @@
            (%udev-unref udev)
            dev))
        paths))))
+
+
+;;;
+;;; Parenthood
+;;;
+(define (udev-device-parent-with-subsystem-devtype dev subsystem devtype)
+  (and-let* ((udev (udev-new))
+             (path (udev-device-syspath dev))
+             (dev (%udev-device-new-from-syspath udev path))
+             (parent
+              (%udev-device-get-parent-with-subsystem-devtype dev
+                                                              subsystem
+                                                              devtype)))
+    (%udev-unref udev)
+    (let ((parent-dev (make-udev-device parent)))
+      (%udev-device-unref parent)
+      parent-dev)))
 
 ) ;; end module
