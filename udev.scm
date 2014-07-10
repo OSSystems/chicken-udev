@@ -2,6 +2,7 @@
 
 (udev-monitor-start
  udev-monitor-stop!
+ udev-list-devices
 
  ;; udev-device record
  udev-device-node
@@ -11,7 +12,7 @@
 )
 
 (import chicken scheme foreign)
-(use extras srfi-18)
+(use extras srfi-1 srfi-18)
 
 (foreign-declare "#include <libudev.h>")
 
@@ -91,6 +92,63 @@
            (udev-device-sysname obj)
            (udev-device-sysnum obj)))
 
+(define %udev-enumerate-new
+  (foreign-lambda (c-pointer (struct "udev_enumerate"))
+                  "udev_enumerate_new"
+                  (c-pointer (struct "udev"))))
+
+(define %udev-enumerate-unref
+  (foreign-lambda void
+                  "udev_enumerate_unref"
+                  (c-pointer (struct "udev_enumerate"))))
+
+(define %udev-enumerate-scan-devices
+  (foreign-lambda int
+                  "udev_enumerate_scan_devices"
+                  (c-pointer (struct "udev_enumerate"))))
+
+(define %udev-enumerate-get-list-entry
+  (foreign-lambda (c-pointer (struct "udev_list_entry"))
+                  "udev_enumerate_get_list_entry"
+                  (c-pointer (struct "udev_enumerate"))))
+
+(define %udev-list-entry-get-next
+  (foreign-lambda (c-pointer (struct "udev_list_entry"))
+                  "udev_list_entry_get_next"
+                  (c-pointer (struct "udev_list_entry"))))
+
+(define %udev-list-get-entry-name
+  (foreign-lambda c-string
+                  "udev_list_entry_get_name"
+                  (c-pointer (struct "udev_list_entry"))))
+
+(define %udev-list-entry-get-value
+  (foreign-lambda c-string
+                  "udev_list_entry_get_value"
+                  (c-pointer (struct "udev_list_entry"))))
+
+(define %udev-device-new-from-syspath
+  (foreign-lambda (c-pointer (struct "udev_device"))
+                  "udev_device_new_from_syspath"
+                  (c-pointer (struct "udev"))
+                  c-string))
+
+(define (udev-scan-devices udev uenum)
+  (if (zero? (%udev-enumerate-scan-devices uenum))
+      (void)
+      (signal
+       (make-composite-condition
+        (make-property-condition 'udev)
+        (make-property-condition
+         'exn
+         'location '%udev-scan-devices
+         'message "Could not scan devices")))))
+
+
+;;;
+;;; Monitoring devices
+;;;
+
 (define (receive-device mon)
   (let ((dev (%receive-device mon)))
     (and dev
@@ -121,5 +179,35 @@
     (%udev-unref udev)
     (%udev-monitor-unref mon)
     (thread-terminate! monitor)))
+
+
+;;;
+;;; Listing devices
+;;;
+
+(define (udev-list-devices)
+  (let* ((udev (udev-new))
+         (uenum (%udev-enumerate-new udev)))
+    (udev-scan-devices udev uenum)
+    (let ((paths
+           (let loop ((entry (%udev-enumerate-get-list-entry uenum)))
+             (if entry
+                 (let ((path (%udev-list-get-entry-name entry)))
+                   (cons path
+                         (loop (%udev-list-entry-get-next entry))))
+                 '()))))
+      (%udev-enumerate-unref uenum)
+      (%udev-unref udev)
+      (filter-map
+       (lambda (path)
+         (and-let* ((udev (handle-exceptions exn
+                            #f
+                            (udev-new)))
+                    (raw-dev (%udev-device-new-from-syspath udev path))
+                    (dev (make-udev-device raw-dev)))
+           (%udev-device-unref raw-dev)
+           (%udev-unref udev)
+           dev))
+       paths))))
 
 ) ;; end module
