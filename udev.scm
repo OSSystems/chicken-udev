@@ -62,7 +62,7 @@
 (define %udev-device-unref
   (foreign-lambda void "udev_device_unref" (c-pointer (struct "udev_device"))))
 
-(define-record udev-device node subsystem type action syspath sysname sysnum)
+(define-record udev-device node subsystem type action syspath sysname sysnum driver)
 
 (define %make-udev-device make-udev-device)
 
@@ -79,18 +79,20 @@
    ((udev-device-get-string "udev_device_get_action") dev)
    ((udev-device-get-string "udev_device_get_syspath") dev)
    ((udev-device-get-string "udev_device_get_sysname") dev)
-   ((udev-device-get-string "udev_device_get_sysnum") dev)))
+   ((udev-device-get-string "udev_device_get_sysnum") dev)
+   ((udev-device-get-string "udev_device_get_driver") dev)))
 
 (define-record-printer (udev-device obj out)
   (fprintf out
-           "#<device node: ~S subsystem: ~S type: ~S action: ~S syspath: ~S sysname: ~S sysnum: ~S>"
+           "#<device node: ~S subsystem: ~S type: ~S action: ~S syspath: ~S sysname: ~S sysnum: ~S driver: ~S>"
            (udev-device-node obj)
            (udev-device-subsystem obj)
            (udev-device-type obj)
            (udev-device-action obj)
            (udev-device-syspath obj)
            (udev-device-sysname obj)
-           (udev-device-sysnum obj)))
+           (udev-device-sysnum obj)
+           (udev-device-driver obj)))
 
 (define %udev-enumerate-new
   (foreign-lambda (c-pointer (struct "udev_enumerate"))
