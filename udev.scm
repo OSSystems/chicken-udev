@@ -32,6 +32,9 @@
          'location 'new-udev
          'message "Could not create udev context")))))
 
+(define %udev-unref
+  (foreign-lambda void "udev_unref" (c-pointer (struct "udev"))))
+
 (define new-monitor
   (foreign-lambda* (c-pointer (struct "udev_monitor"))
                    (((c-pointer (struct "udev")) udev))
@@ -106,7 +109,7 @@
   (let* ((mon-data (thread-specific monitor))
          (udev (car mon-data))
          (mon (cdr mon-data)))
-    ((foreign-lambda void "udev_unref" (c-pointer (struct "udev"))) udev)
+    (%udev-unref udev)
     ((foreign-lambda void "udev_monitor_unref" (c-pointer (struct "udev_monitor"))) mon)
     (thread-terminate! monitor)
     ))
