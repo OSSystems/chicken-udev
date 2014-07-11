@@ -271,8 +271,8 @@
               (%udev-device-get-parent-with-subsystem-devtype dev
                                                               subsystem
                                                               devtype)))
-    (%udev-unref udev)
     (let ((parent-dev (make-udev-device parent)))
+      (%udev-unref udev)
       (%udev-device-unref parent)
       parent-dev)))
 
