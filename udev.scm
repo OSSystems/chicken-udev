@@ -14,6 +14,7 @@
  udev-device-sysname
  udev-device-sysnum
  udev-device-driver
+ udev-device-properties
 )
 
 (import chicken scheme foreign)
@@ -67,7 +68,16 @@
 (define %udev-device-unref
   (foreign-lambda void "udev_device_unref" (c-pointer (struct "udev_device"))))
 
-(define-record udev-device node subsystem type action syspath sysname sysnum driver)
+(define-record udev-device
+  node
+  subsystem
+  type
+  action
+  syspath
+  sysname
+  sysnum
+  driver
+  properties)
 
 (define %make-udev-device make-udev-device)
 
@@ -75,6 +85,23 @@
   (syntax-rules ()
     ((_ c-func)
      (foreign-lambda c-string c-func (c-pointer (struct "udev_device"))))))
+
+
+(define %udev-device-get-properties-list-entry
+  (foreign-lambda (c-pointer (struct "udev_list_entry"))
+                  "udev_device_get_properties_list_entry"
+                  (c-pointer (struct "udev_device"))))
+
+
+(define (udev-device-get-properties dev)
+  (let loop ((entry (%udev-device-get-properties-list-entry dev)))
+    (if entry
+        (let* ((key (%udev-list-get-entry-name entry))
+               (val (%udev-list-get-entry-value entry)))
+          (cons
+           (cons key val)
+           (loop (%udev-list-entry-get-next entry))))
+        '())))
 
 (define (make-udev-device dev)
   (%make-udev-device
@@ -85,11 +112,12 @@
    ((udev-device-get-string "udev_device_get_syspath") dev)
    ((udev-device-get-string "udev_device_get_sysname") dev)
    ((udev-device-get-string "udev_device_get_sysnum") dev)
-   ((udev-device-get-string "udev_device_get_driver") dev)))
+   ((udev-device-get-string "udev_device_get_driver") dev)
+   (udev-device-get-properties dev)))
 
 (define-record-printer (udev-device obj out)
   (fprintf out
-           "#<device node: ~S subsystem: ~S type: ~S action: ~S syspath: ~S sysname: ~S sysnum: ~S driver: ~S>"
+           "#<device node: ~S subsystem: ~S type: ~S action: ~S syspath: ~S sysname: ~S sysnum: ~S driver: ~S properties: ~S>"
            (udev-device-node obj)
            (udev-device-subsystem obj)
            (udev-device-type obj)
@@ -97,7 +125,8 @@
            (udev-device-syspath obj)
            (udev-device-sysname obj)
            (udev-device-sysnum obj)
-           (udev-device-driver obj)))
+           (udev-device-driver obj)
+           (udev-device-properties obj)))
 
 (define %udev-enumerate-new
   (foreign-lambda (c-pointer (struct "udev_enumerate"))
@@ -127,6 +156,11 @@
 (define %udev-list-get-entry-name
   (foreign-lambda c-string
                   "udev_list_entry_get_name"
+                  (c-pointer (struct "udev_list_entry"))))
+
+(define %udev-list-get-entry-value
+  (foreign-lambda c-string
+                  "udev_list_entry_get_value"
                   (c-pointer (struct "udev_list_entry"))))
 
 (define %udev-list-entry-get-value
