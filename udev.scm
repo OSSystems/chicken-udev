@@ -6,6 +6,7 @@
  udev-device-parent-with-subsystem-devtype
 
  ;; udev-device record
+ %make-udev-device
  udev-device?
  udev-device-node
  udev-device-type
