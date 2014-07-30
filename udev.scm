@@ -6,7 +6,7 @@
  udev-device-parent-with-subsystem-devtype
 
  ;; udev-device record
- %make-udev-device
+ make-udev-device
  udev-device?
  udev-device-node
  udev-device-type
@@ -81,8 +81,6 @@
   driver
   properties)
 
-(define %make-udev-device make-udev-device)
-
 (define-syntax udev-device-get-string
   (syntax-rules ()
     ((_ c-func)
@@ -105,8 +103,8 @@
            (loop (%udev-list-entry-get-next entry))))
         '())))
 
-(define (make-udev-device dev)
-  (%make-udev-device
+(define (make-udev-device* dev)
+  (make-udev-device
    ((udev-device-get-string "udev_device_get_devnode") dev)
    ((udev-device-get-string "udev_device_get_subsystem") dev)
    ((udev-device-get-string "udev_device_get_devtype") dev)
@@ -202,7 +200,7 @@
 (define (receive-device mon)
   (let ((dev (%receive-device mon)))
     (and dev
-         (let ((udev-dev (make-udev-device dev)))
+         (let ((udev-dev (make-udev-device* dev)))
            (%udev-device-unref dev)
            udev-dev))))
 
@@ -254,7 +252,7 @@
                             #f
                             (udev-new)))
                     (raw-dev (%udev-device-new-from-syspath udev path))
-                    (dev (make-udev-device raw-dev)))
+                    (dev (make-udev-device* raw-dev)))
            (%udev-device-unref raw-dev)
            (%udev-unref udev)
            dev))
@@ -272,7 +270,7 @@
               (%udev-device-get-parent-with-subsystem-devtype dev
                                                               subsystem
                                                               devtype)))
-    (let ((parent-dev (make-udev-device parent)))
+    (let ((parent-dev (make-udev-device* parent)))
       (%udev-unref udev)
       (%udev-device-unref parent)
       parent-dev)))
